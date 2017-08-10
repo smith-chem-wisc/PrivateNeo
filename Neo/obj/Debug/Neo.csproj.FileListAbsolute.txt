@@ -1,0 +1,18 @@
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\bin\Debug\Neo.exe.config
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\bin\Debug\Neo.exe
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\bin\Debug\Neo.pdb
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.csprojResolveAssemblyReference.cache
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.Properties.Resources.resources
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.csproj.GenerateResource.Cache
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.exe
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.pdb
+C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.Neo.resources
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\bin\Debug\Neo.exe.config
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\bin\Debug\Neo.exe
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\bin\Debug\Neo.pdb
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.csprojResolveAssemblyReference.cache
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.Neo.resources
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.Properties.Resources.resources
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.csproj.GenerateResource.Cache
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.exe
+D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.pdb
