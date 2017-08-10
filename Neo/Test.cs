@@ -1,9 +1,8 @@
-﻿using System;
+﻿using NeoInternal;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 
 namespace Neo
 {
@@ -41,7 +40,7 @@ namespace Neo
 /*
         public static void readProteins(List<TheoreticalProtein> list)
         {
-            localTheoreticals = list.Select(t => t.getSeq()).ToList();
+            localTheoreticals = list.Select(t => t.seq).ToList();
         }
 
         public static bool foundParent(List<string> localTheoreticals, string frag)

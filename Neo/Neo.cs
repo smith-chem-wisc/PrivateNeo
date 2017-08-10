@@ -1,23 +1,15 @@
-﻿using System;
+﻿using NeoInternal;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
 
 namespace Neo
 {
     public partial class Neo : Form
     {
 
-        public static double precursorMassTolerancePpm; //(ppm)
-        public static double productMassToleranceDa; //(Da)
         public static readonly int ionsUsedMassVer = 2;
-        public static readonly int ionsUsedDigFilter = 6;
         System.Windows.Forms.OpenFileDialog ofdNIons = new OpenFileDialog();
         System.Windows.Forms.OpenFileDialog ofdYCons = new OpenFileDialog();
         System.Windows.Forms.OpenFileDialog ofdFASTA = new OpenFileDialog();
@@ -25,16 +17,12 @@ namespace Neo
         public static string cFileName;//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\170523_Comp_Cutoff\2017-05-19-16-27-56_Comp-BY\Task2Search\04-29-13_B6_Frac5_4uL-Calibrated_allPSMs_OpenSearch.psmtsv";//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\yOutput.txt";
         public static string databaseFileName;//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\170523_Comp_Cutoff\Mixed\ClassicSearchOutputFASTA.txt";//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Frac5_Scan_ClassicSearchOutputFASTA.fasta";
         public static double fixedModMass = 0.0; //carbamidomethyl is defaulted at 0.
-        public static char[] AANames = new char[20] { 'G', 'A', 'S', 'P', 'V', 'T', 'L', 'I', 'N', 'D', 'Q', 'K', 'E', 'M', 'H', 'F', 'R', 'C', 'Y', 'W' }; //20 common AA, ordered by mass assuming carbamido
-        public static bool generateDecoys;
 
         // public static List<PSM> MMOutput;
-        public static List<IonType> ionsUsed = new List<IonType> { IonType.b, IonType.y };
 
         public Neo()
         {
             InitializeComponent();
-
         }
 
         private void Neo_Load(object sender, EventArgs e)
@@ -53,7 +41,7 @@ namespace Neo
         private void Engine(object sender, EventArgs e)
         {
             this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading N and C files... (Task 0/6)"; }));
-            ImportData import = new ImportData(this,backgroundWorker1);
+            ImportData import = new ImportData(backgroundWorker1);
             List<PSM> MMOutput=new List<PSM>();
             List<TheoreticalProtein> database = new List<TheoreticalProtein>();
             bool passedFileIO = true;
@@ -90,7 +78,7 @@ namespace Neo
                             }
 
                             //if new seq is present in db
-                            if (database.AsParallel().Where(x => x.getSeq().Contains(seq)).Any())
+                            if (database.AsParallel().Where(x => x.seq.Contains(seq)).Any())
                             {
                                 hits[length-1]++;
                                 if (mer != length) //if not last position
@@ -154,15 +142,15 @@ namespace Neo
 
                // this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading Fragment Index... (Task 3/6)"; }));
                 ClearProgress();
-                AlternativeSequences altSeq = new AlternativeSequences(this, backgroundWorker1);
+                AlternativeSequences altSeq = new AlternativeSequences(backgroundWorker1);
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Finding ambiquity... (Task 3/6)"; }));
                 ClearProgress();
-                altSeq.FindAmiguity(candidates, database);
-                generateDecoys = false;
+                altSeq.FindAmbiguity(candidates, database);
+                FalsePositives.generateDecoys = false;
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Recording variants... (Task 4/6)"; }));
                 ClearProgress();
-                FalsePositives rfp = new FalsePositives(this, backgroundWorker1);
+                FalsePositives rfp = new FalsePositives(backgroundWorker1);
                 rfp.FindCommonFalsePositives(candidates, database);
 
                 //        MessageBox.Show("After filtering, "+candidates.Count().ToString() + " putative fusion peptides were generated");
@@ -294,18 +282,18 @@ namespace Neo
         {
             try
             {
-                precursorMassTolerancePpm = Convert.ToDouble(MS1Tolerance.Text);
+                FalsePositives.precursorMassTolerancePpm = Convert.ToDouble(MS1Tolerance.Text);
             }
-            catch { MS1Tolerance.Text = precursorMassTolerancePpm.ToString(); }
+            catch { MS1Tolerance.Text = FalsePositives.precursorMassTolerancePpm.ToString(); }
         }
 
         private void MS2Tolerance_TextChanged(object sender, EventArgs e)
         {
             try
             {
-                productMassToleranceDa = Convert.ToDouble(MS2Tolerance.Text);
+                AlternativeSequences.productMassToleranceDa = Convert.ToDouble(MS2Tolerance.Text);
             }
-            catch { MS2Tolerance.Text = precursorMassTolerancePpm.ToString(); }
+            catch { MS2Tolerance.Text = FalsePositives.precursorMassTolerancePpm.ToString(); }
         }
 
         #endregion Private GUI
@@ -319,11 +307,11 @@ namespace Neo
         {
             if(bCheckBox.Checked)
             {
-                ionsUsed.Add(IonType.b);
+                AlternativeSequences.ionsUsed.Add(IonType.b);
             }
             else
             {
-                ionsUsed.Remove(IonType.b);
+                AlternativeSequences.ionsUsed.Remove(IonType.b);
             }
         }
 
@@ -331,11 +319,11 @@ namespace Neo
         {
             if (yCheckBox.Checked)
             {
-                ionsUsed.Add(IonType.y);
+                AlternativeSequences.ionsUsed.Add(IonType.y);
             }
             else
             {
-                ionsUsed.Remove(IonType.y);
+                AlternativeSequences.ionsUsed.Remove(IonType.y);
             }
         }
 
@@ -343,11 +331,11 @@ namespace Neo
         {
             if (cCheckBox.Checked)
             {
-                ionsUsed.Add(IonType.c);
+                AlternativeSequences.ionsUsed.Add(IonType.c);
             }
             else
             {
-                ionsUsed.Remove(IonType.c);
+                AlternativeSequences.ionsUsed.Remove(IonType.c);
             }
         }
 
@@ -355,11 +343,11 @@ namespace Neo
         {
             if (zdotCheckBox.Checked)
             {
-                ionsUsed.Add(IonType.zdot);
+                AlternativeSequences.ionsUsed.Add(IonType.zdot);
             }
             else
             {
-                ionsUsed.Remove(IonType.zdot);
+                AlternativeSequences.ionsUsed.Remove(IonType.zdot);
             }
         }
 
@@ -367,11 +355,11 @@ namespace Neo
         {
             if(checkBox1.Checked)
             {
-                generateDecoys = true;
+                FalsePositives.generateDecoys = true;
             }
             else
             {
-                generateDecoys = false;
+                FalsePositives.generateDecoys = false;
             }
         }
     }

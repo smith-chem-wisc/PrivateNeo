@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
+using NeoInternal;
 
 namespace Neo
 {
-    class ExportData
+    public class ExportData
     {
         public static string folder;
+
         public static void ExportAll(List<PSM> psms, string databaseFileName)
         {
             folder = DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss");
@@ -45,7 +45,7 @@ namespace Neo
                     for(int fc=0; fc<psm.getFusionCandidates().Count(); fc++)
                     {
                         FusionCandidate fusionCandidate = psm.getFusionCandidates()[fc]; //need fc for indexOfFirstProbableSequence
-                        char[] tempArray = fusionCandidate.getSeq().ToCharArray();
+                        char[] tempArray = fusionCandidate.seq.ToCharArray();
                         //if most probable, add to all and most
                         if (fusionCandidate.fusionType.Equals(probableType))
                         {
@@ -115,9 +115,9 @@ namespace Neo
                     mostProbableSequences = mostProbableSequences.Substring(0, mostProbableSequences.Length - 1); //remove last "|"
 
                     string ambiguity = "";
-                    AlternativeSequences.findIons(psm.getFusionCandidates()[indexOfFirstProbableSequence],psm); //this should be carried over, but it's not...
+                    AlternativeSequences.findIons(psm.getFusionCandidates()[indexOfFirstProbableSequence], psm); //this should be carried over, but it's not...
                     bool[] foundIons = psm.getFusionCandidates()[indexOfFirstProbableSequence].getFoundIons();
-                    char[] firstSeq = psm.getFusionCandidates()[indexOfFirstProbableSequence].getSeq().ToCharArray();
+                    char[] firstSeq = psm.getFusionCandidates()[indexOfFirstProbableSequence].seq.ToCharArray();
                  //   if(foundIons.Count()==firstSeq.Count()) //prevent crashing if something went wrong
                    // {
                     bool ambiguous = false;
@@ -145,7 +145,7 @@ namespace Neo
                     string potentialFalsePositives = "";
                     foreach(Variant v in psm.variants)
                     {
-                        potentialFalsePositives += v.getID() + "_" + v.start + "-" + (v.start + v.peptideLength - 1) + "(" + v.pepSeq + ")" + v.varType + "|";
+                        potentialFalsePositives += v.id + "_" + v.start + "-" + (v.start + v.peptideLength - 1) + "(" + v.pepSeq + ")" + v.varType + "|";
                     }
                     if(potentialFalsePositives.Length>0)
                     {
@@ -162,7 +162,7 @@ namespace Neo
                     } 
                     //  }
                       //file.WriteLine("Scan" +                     '\t' + "ExperimentalMass" +         '\t' + "OriginalBSequence" + '\t' + "OriginalBScore" +      '\t' + "OriginalYSequence" +    '\t' + "OriginalYScore" +       '\t' + "SampleSequence" +                                        '\t' + "Ambiguity" +       '\t' + "ProbableType" +     '\t' + "MostProbablySequenceJunctions"+ '\t' + "MostProbableSequence(s)" +            '\t' + "MostProbableParents" + '\t' + "AllPossibleSequenceJunctions" + '\t' + "AllPossibleSequence(s)" + '\t' + "AllPossibleParent(s)" + '\t' + "NumberOfPossibleSequences");
-                    file.WriteLine(psm.getScan().ToString() + '\t' + psm.getExpMass().ToString() + '\t' + psm.getNInfo().getSeq() + '\t' + psm.getNInfo().score + '\t' + psm.getCInfo().getSeq() + '\t' + psm.getCInfo().score + '\t' + psm.getFusionCandidates()[indexOfFirstProbableSequence].getSeq() + '\t' + ambiguity + '\t' + psm.fusionType.ToString() + '\t' + mostProbableSequences + '\t' + mostProbableSequences.Replace("-", "") + '\t' + mostProbableParents + '\t' + allPossibleSequences + '\t' + allPossibleSequences.Replace("-", "") + '\t' + allPossibleParents + '\t' + psm.getFusionCandidates().Count().ToString() + '\t' + potentialFalsePositives);
+                    file.WriteLine(psm.getScan().ToString() + '\t' + psm.getExpMass().ToString() + '\t' + psm.getNInfo().seq + '\t' + psm.getNInfo().score + '\t' + psm.getCInfo().seq + '\t' + psm.getCInfo().score + '\t' + psm.getFusionCandidates()[indexOfFirstProbableSequence].seq + '\t' + ambiguity + '\t' + psm.fusionType.ToString() + '\t' + mostProbableSequences + '\t' + mostProbableSequences.Replace("-", "") + '\t' + mostProbableParents + '\t' + allPossibleSequences + '\t' + allPossibleSequences.Replace("-", "") + '\t' + allPossibleParents + '\t' + psm.getFusionCandidates().Count().ToString() + '\t' + potentialFalsePositives);
                 }
             }
       /*      using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\" + folder + @"\"+folder+"testFlipper.txt"))
@@ -172,7 +172,7 @@ namespace Neo
                     //printout the scan, the mass, the sequences with and without junctions, the number of potential sequences
                     foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
                     {
-                        file.WriteLine(fusionCandidate.getSeq());
+                        file.WriteLine(fusionCandidate.seq);
                     }
                 }
             }*/
@@ -230,7 +230,7 @@ namespace Neo
                     foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
                     {
                         file.WriteLine(">sp|" + scan + fusionCandidate.fusionType.ToString() + fusNum + "| " + scan + "-" + fusNum + " Proposed " + fusionCandidate.fusionType.ToString() + " fusion peptide GN=FUS PE=1 SV=1");
-                        string seq = fusionCandidate.getSeq();
+                        string seq = fusionCandidate.seq;
                         for (int i = 0; i < seq.Count(); i += 60) //60 used as number of AAs per line in a FASTA file. It is unlikely to observe something this large currently, but is here as a precaution.
                         {
                             if ((i + 60) < seq.Count())
@@ -264,7 +264,7 @@ namespace Neo
                     foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
                     {
                         file.WriteLine(">sp|" + scan + fusionCandidate.fusionType.ToString() + fusNum + "| " + scan + "-" + fusNum + " Proposed " + fusionCandidate.fusionType.ToString() + " fusion peptide GN=FUS PE=1 SV=1");
-                        string seq = fusionCandidate.getSeq();
+                        string seq = fusionCandidate.seq;
                         for (int i = 0; i < seq.Count(); i += 60) //60 used as number of AAs per line in a FASTA file. It is unliekly to observe something this large currently, but is here as a precaution.
                         {
                             if ((i + 60) < seq.Count())
@@ -498,7 +498,7 @@ namespace Neo
                         foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
                         {
                             file.WriteLine(">sp|" + scan + fusionCandidate.fusionType.ToString() + fusNum + "| " + scan + "-" + fusNum + " Proposed " + fusionCandidate.fusionType.ToString() + " fusion peptide GN=FUS PE=1 SV=1");
-                            string seq = fusionCandidate.getSeq();
+                            string seq = fusionCandidate.seq;
                             for (int i = 0; i < seq.Count(); i += 60) //60 used as number of AAs per line in a FASTA file. It is unliekly to observe something this large currently, but is here as a precaution.
                             {
                                 if ((i + 60) < seq.Count())
@@ -522,7 +522,7 @@ namespace Neo
             string output = "";
             foreach (TranslatedParent tlp in translatedParents)
             {
-                output += tlp.getID() + "_" + tlp.start + "-" + (tlp.start + tlp.peptideLength-1) + "(" + tlp.getSeq().Substring(tlp.start, tlp.peptideLength) + ")" + "|";
+                output += tlp.id + "_" + tlp.start + "-" + (tlp.start + tlp.peptideLength-1) + "(" + tlp.seq.Substring(tlp.start, tlp.peptideLength) + ")" + "|";
             }
             foreach (CisParent cp in cisParents)
             {
@@ -530,8 +530,8 @@ namespace Neo
                 {
                     foreach (int cs in cp.cStart)
                     {
-                        output += cp.getID() + "_" + ns + "-" + (ns + cp.nLength-1) + "(" + cp.getSeq().Substring(ns, cp.nLength) + ")"
-                            + "&" + cs + "-" + (cs + cp.cLength-1) + "(" + cp.getSeq().Substring(cs, cp.cLength) + ")" + "|";
+                        output += cp.id + "_" + ns + "-" + (ns + cp.nLength-1) + "(" + cp.seq.Substring(ns, cp.nLength) + ")"
+                            + "&" + cs + "-" + (cs + cp.cLength-1) + "(" + cp.seq.Substring(cs, cp.cLength) + ")" + "|";
                     }
                 }
             }
@@ -543,14 +543,14 @@ namespace Neo
                 {
                     foreach (int ts in tp.start)
                     {
-                        nOutput += tp.getID() + "_" + ts + "-" + (ts + tp.peptideLength-1) + "(" + tp.getSeq().Substring(ts, tp.peptideLength) + ")" + "|";
+                        nOutput += tp.id + "_" + ts + "-" + (ts + tp.peptideLength-1) + "(" + tp.seq.Substring(ts, tp.peptideLength) + ")" + "|";
                     }
                 }
                 else
                 {
                     foreach (int ts in tp.start)
                     {
-                        cOutput += tp.getID() + "_" + ts + "-" + (ts + tp.peptideLength-1) + "(" + tp.getSeq().Substring(ts, tp.peptideLength) + ")" + "|";
+                        cOutput += tp.id + "_" + ts + "-" + (ts + tp.peptideLength-1) + "(" + tp.seq.Substring(ts, tp.peptideLength) + ")" + "|";
                     }
                 }
             }

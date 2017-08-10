@@ -1,25 +1,22 @@
-﻿using System;
+﻿using NeoInternal;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Windows.Forms;
 using System.ComponentModel;
-
-
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace Neo
 {
     class ImportData
     {
-        private Neo neo = null;
         private BackgroundWorker worker = null;
-        public ImportData(Neo neo,BackgroundWorker worker)
+
+        public ImportData(BackgroundWorker worker)
         {
-            this.neo = neo;
             this.worker = worker;
         }
+
         public List<PSM> ImportPSMs(string nFileName, string cFileName)
         {
             List<PSM> MMOutput = new List<PSM>();
@@ -176,9 +173,9 @@ namespace Neo
             {
                 try //try to remove other info and just produce an accession number
                 {
-                    database[i].setID(database[i].getID().Split('|').ToArray()[1]);
+                    database[i].id = (database[i].id.Split('|').ToArray()[1]);
                 }
-                catch { MessageBox.Show("FASTA FAIL " + database[i].getID()); } //usually caused by missing >sp|
+                catch { MessageBox.Show("FASTA FAIL " + database[i].id); } //usually caused by missing >sp|
             }
             return database;
         }

@@ -16,3 +16,12 @@ D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo
 D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.csproj.GenerateResource.Cache
 D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.exe
 D:\170710_Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Neo\obj\Debug\Neo.pdb
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\bin\Debug\Neo.exe.config
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\bin\Debug\Neo.exe
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\bin\Debug\Neo.pdb
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\Debug\Neo.csprojResolveAssemblyReference.cache
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\Debug\Neo.Neo.resources
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\Debug\Neo.Properties.Resources.resources
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\Debug\Neo.csproj.GenerateResource.Cache
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\Debug\Neo.exe
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\Debug\Neo.pdb

@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel;
-using System.Windows.Forms;
+using System.Linq;
+using NeoInternal;
 
 namespace Neo
 {
@@ -31,8 +29,8 @@ namespace Neo
                 if (psm.getExpMass() < 20000) //some incorrect charge state assignments can yield huge calculated peptide masses causing StackOverflowExceptions.
                 {
                     //preliminary filters can be removed if MassMatch calls to IonCrop are set to true.
-                    string B = IonCrop(psm.getNInfo().getSeq(), psm.getExpMass(), 0, IonType.b, true); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
-                    string Y = IonCrop(psm.getCInfo().getSeq(), psm.getExpMass(), 0, IonType.y, true); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
+                    string B = IonCrop(psm.getNInfo().seq, psm.getExpMass(), 0, IonType.b, true); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
+                    string Y = IonCrop(psm.getCInfo().seq, psm.getExpMass(), 0, IonType.y, true); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
                     for (int y = 0; y < Y.Length - Neo.ionsUsedMassVer; y++) //foreach y aa removed
                     {
                         for (int b = 0; b < B.Length - Neo.ionsUsedMassVer; b++) //foreach b aa removed
@@ -42,7 +40,7 @@ namespace Neo
                     }
                     if (psm.getFusionCandidates().Count()>0) //match was found
                     {
-                      //  MessageBox.Show(psm.getScan()+" "+psm.getFusionCandidates()[0].getSeq()+" "+psm.getFusionCandidates().Count()+" "+psms.Count());
+                      //  MessageBox.Show(psm.getScan()+" "+psm.getFusionCandidates()[0].seq+" "+psm.getFusionCandidates().Count()+" "+psms.Count());
                         candidates.Add(psm);
                     }
                 }
@@ -64,16 +62,16 @@ namespace Neo
             //add PTM masses
             foreach (PTM ptm in psm.getNInfo().getPTMs())
             {
-                if (ptm.getIndex() < BFrag.Length)
+                if (ptm.index < BFrag.Length)
                 {
-                    TheoreticalMass += ptm.getMass();
+                    TheoreticalMass += ptm.mass;
                 }
             }
             foreach(PTM ptm in psm.getCInfo().getPTMs())
             {
-                if (Y.Length-ptm.getIndex() < YFrag.Length)
+                if (Y.Length-ptm.index < YFrag.Length)
                 {
-                    TheoreticalMass += ptm.getMass();
+                    TheoreticalMass += ptm.mass;
                 }
             }
 
@@ -87,7 +85,7 @@ namespace Neo
             }
             //if match
             //bool elif = true; //"else if" where not a match==true
-            else if (Neo.generateDecoys)
+            else if (FalsePositives.generateDecoys)
             {
                 //else if (((TheoreticalMass - Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS * 7) > (ExperimentalMass - 1 * Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS) && (TheoreticalMass - Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS * 7) < (ExperimentalMass + 1 * Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS)) | ((TheoreticalMass + Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS * 7) > (ExperimentalMass - 1 * Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS) && (TheoreticalMass + Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS * 7) < (ExperimentalMass + 1 * Constants.PEPTIDE_N_TERMINAL_MONOISOTOPIC_MASS)))//if match                                                                                                                                                                                                                                                                                                                        //if ((TheoreticalMass) > (ExperimentalMass+ i -PrecursorMassToleranceDa) && (TheoreticalMass) < (ExperimentalMass+i +PrecursorMassToleranceDa)) //if match
                 if (((TheoreticalMass) > (ExperimentalMass - 9.5) && (TheoreticalMass) < (ExperimentalMass - 4.5)) | ((TheoreticalMass) > (ExperimentalMass + 5.5) && (TheoreticalMass) < (ExperimentalMass + 7.5)))//if match                          //if ((TheoreticalMass) > (ExperimentalMass+ i -PrecursorMassToleranceDa) && (TheoreticalMass) < (ExperimentalMass+i +PrecursorMassToleranceDa)) //if match                                                                                                                                                                                                                 //else if(Math.Abs(ExperimentalMass - TheoreticalMass)<40 && (ExperimentalMass - TheoreticalMass)-Math.Floor(ExperimentalMass-TheoreticalMass)>0.3 && (ExperimentalMass - TheoreticalMass) - Math.Floor(ExperimentalMass - TheoreticalMass) < 0.8)
@@ -96,7 +94,7 @@ namespace Neo
                     bool previouslyFound = false;
                     foreach (FusionCandidate oldCandidate in psm.getFusionCandidates())
                     {
-                        if ((BFrag + YFrag).Equals(oldCandidate.getSeq())) //see if that sequence was already recorded
+                        if ((BFrag + YFrag).Equals(oldCandidate.seq)) //see if that sequence was already recorded
                         {
                             previouslyFound = true;
                         }
@@ -111,13 +109,13 @@ namespace Neo
             }
             else
             {
-                if ((TheoreticalMass) > (ExperimentalMass * (1 - Neo.precursorMassTolerancePpm / 1000000)) && (TheoreticalMass) < (ExperimentalMass * (1 + Neo.precursorMassTolerancePpm / 1000000))) //if match                          //if ((TheoreticalMass) > (ExperimentalMass+ i -PrecursorMassToleranceDa) && (TheoreticalMass) < (ExperimentalMass+i +PrecursorMassToleranceDa)) //if match
+                if ((TheoreticalMass) > (ExperimentalMass * (1 - FalsePositives.precursorMassTolerancePpm / 1000000)) && (TheoreticalMass) < (ExperimentalMass * (1 + FalsePositives.precursorMassTolerancePpm / 1000000))) //if match                          //if ((TheoreticalMass) > (ExperimentalMass+ i -PrecursorMassToleranceDa) && (TheoreticalMass) < (ExperimentalMass+i +PrecursorMassToleranceDa)) //if match
                 {
                    // elif = false;
                     bool previouslyFound = false;
                     foreach (FusionCandidate oldCandidate in psm.getFusionCandidates())
                     {
-                        if ((BFrag + YFrag).Equals(oldCandidate.getSeq())) //see if that sequence was already recorded
+                        if ((BFrag + YFrag).Equals(oldCandidate.seq)) //see if that sequence was already recorded
                         {
                             previouslyFound = true;
                         }

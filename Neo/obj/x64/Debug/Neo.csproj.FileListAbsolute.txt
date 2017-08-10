@@ -1,0 +1,4 @@
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\x64\Debug\Neo.csprojResolveAssemblyReference.cache
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\x64\Debug\Neo.Neo.resources
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\x64\Debug\Neo.Properties.Resources.resources
+C:\Users\antho\Documents\GitHub\PrivateNeo\Neo\obj\x64\Debug\Neo.csproj.GenerateResource.Cache
