@@ -1,7 +1,0 @@
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\bin\Debug\netstandard1.4\NeoTest.deps.json
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\bin\Debug\netstandard1.4\NeoTest.dll
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\bin\Debug\netstandard1.4\NeoTest.pdb
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\obj\Debug\netstandard1.4\NeoTest.AssemblyInfo.cs
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\obj\Debug\netstandard1.4\NeoTest.dll
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\obj\Debug\netstandard1.4\NeoTest.pdb
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoTest\obj\Debug\netstandard1.4\NeoTest.csprojResolveAssemblyReference.cache

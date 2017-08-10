@@ -1,5 +1,0 @@
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoInternal\bin\Debug\NeoInternal.dll
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoInternal\bin\Debug\NeoInternal.pdb
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoInternal\obj\Debug\NeoInternal.csprojResolveAssemblyReference.cache
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoInternal\obj\Debug\NeoInternal.dll
-C:\Users\antho\Documents\GitHub\PrivateNeo\NeoInternal\obj\Debug\NeoInternal.pdb
