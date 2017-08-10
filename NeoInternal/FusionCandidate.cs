@@ -1,5 +1,4 @@
-﻿using NeoInternal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,7 +14,12 @@ namespace NeoInternal
         public List<CisParent> cisParents { get; set; }
         public List<TransParent> transParents { get; set; }
 
-        public enum FusionType { TL, NC, RC, TS } //ordered by priority //translated, normalCis, reverseCis, trans
+        //ordered by priority //translated, normalCis, reverseCis, trans
+        public enum FusionType
+        {
+            TL, NC, RC, TS
+        } 
+
         public FusionType fusionType { get; set; }
         //private List<FusionCandidate> fragSources;    
 
