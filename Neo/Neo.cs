@@ -9,14 +9,12 @@ namespace Neo
     public partial class Neo : Form
     {
 
-        public static readonly int ionsUsedMassVer = 2;
         System.Windows.Forms.OpenFileDialog ofdNIons = new OpenFileDialog();
         System.Windows.Forms.OpenFileDialog ofdYCons = new OpenFileDialog();
         System.Windows.Forms.OpenFileDialog ofdFASTA = new OpenFileDialog();
         public static string nFileName;//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\170523_Comp_Cutoff\2017-05-19-16-27-56_Comp-BY\Task1Search\04-29-13_B6_Frac5_4uL-Calibrated_allPSMs_OpenSearch.psmtsv";//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\bOutput.txt";
         public static string cFileName;//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\170523_Comp_Cutoff\2017-05-19-16-27-56_Comp-BY\Task2Search\04-29-13_B6_Frac5_4uL-Calibrated_allPSMs_OpenSearch.psmtsv";//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\yOutput.txt";
         public static string databaseFileName;//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\170523_Comp_Cutoff\Mixed\ClassicSearchOutputFASTA.txt";//= @"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Frac5_Scan_ClassicSearchOutputFASTA.fasta";
-        public static double fixedModMass = 0.0; //carbamidomethyl is defaulted at 0.
 
         // public static List<PSM> MMOutput;
 
@@ -47,13 +45,13 @@ namespace Neo
             bool passedFileIO = true;
          //   try
             {
-                MMOutput = import.ImportPSMs(nFileName, cFileName);
-
+                MMOutput = import.ImportPSMs(nFileName, cFileName, out string error_message);
+                MessageBox.Show(error_message);
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading database... (Task 1/6)"; }));
                 ClearProgress();
-                database = import.ImportDatabase(databaseFileName);
-
+                database = import.ImportDatabase(databaseFileName, out string error_message2);
+                MessageBox.Show(error_message2);
 
                 {
                     //Cool bit of code to identify number of random sequences of a specific length existing within a database. 5mer takes ~3 hours.
@@ -135,8 +133,9 @@ namespace Neo
             {
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Splicing peptides... (Task 2/6)"; }));
                 ClearProgress();
-                SpliceFragments sf = new SpliceFragments(this, backgroundWorker1);
-                List<PSM> candidates = sf.ExperimentalTheoreticalMatching(MMOutput);
+                SpliceFragments sf = new SpliceFragments(backgroundWorker1);
+                List<PSM> candidates = sf.ExperimentalTheoreticalMatching(MMOutput, out string error_message);
+                MessageBox.Show(error_message);
                 { }
       //          MessageBox.Show(candidates.Count().ToString() + " putative fusion peptide PSMs were selected");
 
@@ -146,18 +145,21 @@ namespace Neo
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Finding ambiquity... (Task 3/6)"; }));
                 ClearProgress();
-                altSeq.FindAmbiguity(candidates, database);
+                altSeq.FindAmbiguity(candidates, database, out string error_message2);
+                MessageBox.Show(error_message2);
                 FalsePositives.generateDecoys = false;
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Recording variants... (Task 4/6)"; }));
                 ClearProgress();
                 FalsePositives rfp = new FalsePositives(backgroundWorker1);
-                rfp.FindCommonFalsePositives(candidates, database);
+                rfp.FindCommonFalsePositives(candidates, database, out string error_message3);
+                MessageBox.Show(error_message3);
 
                 //        MessageBox.Show("After filtering, "+candidates.Count().ToString() + " putative fusion peptides were generated");
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Exporting results... (Task 5/6)"; }));
                 ClearProgress();
-                ExportData.ExportAll(candidates, databaseFileName);
+                string e3 = ExportData.ExportAll(candidates, databaseFileName);
+                if (e3.Length > 0) MessageBox.Show(e3);
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Complete! (6/6)"; }));
 

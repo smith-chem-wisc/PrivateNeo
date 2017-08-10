@@ -14,10 +14,13 @@ namespace NeoInternal
         public string score { get; set; }
         private List<PTM> ptms;
 
-        public InitialID(string file, int scan, double expMass, string id, string seq, string peaks, string score) : base(file, scan, expMass)
+        public InitialID(string file, int scan, double expMass, string id, string seq, string peaks, string scorem, out string error_message) 
+            : base(file, scan, expMass)
         {
+            error_message = "";
             this.ptms = new List<PTM>();
-            this.seq = cleanSeq(seq);
+            this.seq = cleanSeq(seq, out string e);
+            error_message += e;
             this.id = id;
             this.score = score;
             try
@@ -73,8 +76,9 @@ namespace NeoInternal
         }
 
 
-        public string cleanSeq(string seq)
+        public string cleanSeq(string seq, out string error_message)
         {
+            error_message = "";
             bool ModificationOn = false;
             string ModificationName = "";
             int aaIndex = 0;
@@ -84,7 +88,8 @@ namespace NeoInternal
                 if (amino_acid == ')') //only occurs at end of mod
                 {
                     ModificationOn = false;
-                    double modMass = MassCalculator.getPTMMass(ModificationName);
+                    double modMass = MassCalculator.getPTMMass(ModificationName, out string e);
+                    error_message += e;
                     PTM ptm = new PTM(ModificationName, aaIndex, modMass);
                     this.ptms.Add(ptm);                                      
                 }

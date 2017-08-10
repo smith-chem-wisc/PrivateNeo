@@ -17,8 +17,9 @@ namespace NeoInternal
             this.worker = worker;
         }        
         
-        public void FindCommonFalsePositives(List<PSM> psms, List<TheoreticalProtein> database)
+        public void FindCommonFalsePositives(List<PSM> psms, List<TheoreticalProtein> database, out string error_message)
         {
+            error_message = "";
             int i = 0;
             foreach(PSM psm in psms)
             {
@@ -38,8 +39,9 @@ namespace NeoInternal
                                 int fragLength = info.fragFound.Length;
                                 string possibleTranslatedSequence = protSeq.Substring(index, fragLength);
                                 if(!possibleTranslatedSequence.Equals(fusionCandidate.seq)) //if not already found as translated
-                                { 
-                                    double fragMass = MassCalculator.MonoIsoptopicMass(possibleTranslatedSequence);
+                                {
+                                    double fragMass = MassCalculator.MonoIsoptopicMass(possibleTranslatedSequence, out string e);
+                                    error_message += e;
                                     double expMass = psm.getExpMass();
                                     while (fragMass < expMass + 187.079 - 57.021+1)
                                     {
@@ -176,7 +178,8 @@ namespace NeoInternal
                                             if (index + fragLength < protSeq.Length)
                                             {
                                                 possibleTranslatedSequence = protSeq.Substring(index, fragLength);
-                                                fragMass = MassCalculator.MonoIsoptopicMass(possibleTranslatedSequence);
+                                                fragMass = MassCalculator.MonoIsoptopicMass(possibleTranslatedSequence, out string e2);
+                                                error_message += e2;
                                             }
                                             else
                                             {
@@ -190,7 +193,8 @@ namespace NeoInternal
                                             if (index >= 0)
                                             {
                                                 possibleTranslatedSequence = protSeq.Substring(index, fragLength);
-                                                fragMass = MassCalculator.MonoIsoptopicMass(possibleTranslatedSequence);
+                                                fragMass = MassCalculator.MonoIsoptopicMass(possibleTranslatedSequence, out string e2);
+                                                error_message += e2;
                                             }
                                             else
                                             {
@@ -236,8 +240,9 @@ namespace NeoInternal
         }
 
         //compare the 6 first and last aa of each fusion candidate with database and determine if precursor mass can be achieved within 5 ppm. If it can, remove the psm from the list
-        public void removeTranslatedPeptides(List<PSM> psms, List<TheoreticalProtein> database)
+        public void removeTranslatedPeptides(List<PSM> psms, List<TheoreticalProtein> database, out string error_message)
         {
+            error_message = "";
             for (int i = 0; i < psms.Count(); i++)
             {
 
@@ -288,7 +293,8 @@ namespace NeoInternal
                                             //if (Ion == 0) //if B main
                                             {
                                                 protProd = prot.seq.Substring(indexes[sameProtIndex], numAAused);
-                                                prodMass = MassCalculator.MonoIsoptopicMass(protProd);
+                                                prodMass = MassCalculator.MonoIsoptopicMass(protProd, out string e2);
+                                                error_message += e2;
                                                 //MessageBox.Show("1 "+ProtProd+" "+FASTARow[0].ToString() + " " + ProdMass.ToString());
                                                 /*        if (PTMInclude == 1)
                                                         {
@@ -363,7 +369,8 @@ namespace NeoInternal
                                             {
                                                 protProd = prot.seq.Substring(indexes[sameProtIndex] - numAAused + ionsUsedDigFilter, numAAused);
                                                 //MessageBox.Show(BProt);
-                                                prodMass = MassCalculator.MonoIsoptopicMass(protProd);
+                                                prodMass = MassCalculator.MonoIsoptopicMass(protProd, out string e);
+                                                error_message += e;
                                                 //MessageBox.Show(Prot.IndexOf(bigFrag).ToString() + " " + AASearchLength + " "+bigFrag.Count().ToString());
                                                 //MessageBox.Show("2 "+bigFrag+" "+ProtProd + " " + ProdMass.ToString());
                                                 /*      if (PTMInclude == 1)

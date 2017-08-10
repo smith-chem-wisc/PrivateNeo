@@ -1,14 +1,12 @@
-﻿using NeoInternal;
-using System;
+﻿using System;
 using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
 
-namespace Neo
+namespace NeoInternal
 {
-    class MassCalculator
+    public class MassCalculator
     {
         public static double[] MONOISOTOPIC_AMINO_ACID_MASSES;
         public static double[] AVERAGE_AMINO_ACID_MASSES;
@@ -30,7 +28,7 @@ namespace Neo
                 AVERAGE_AMINO_ACID_MASSES[i] = double.NaN;
             }
 
-            using (StreamReader amino_acids = new StreamReader(Path.Combine(Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]), "amino_acids.tsv"))) //file located in Morpheus folder
+            using (StreamReader amino_acids = new StreamReader(Path.Combine(Environment.CurrentDirectory, "amino_acids.tsv"))) //file located in Morpheus folder
             {
                 amino_acids.ReadLine();
 
@@ -56,7 +54,7 @@ namespace Neo
         {
             ModificationsDT.Columns.Add("Name", typeof(string));
             ModificationsDT.Columns.Add("MonoisotopicMass", typeof(double));
-            using (StreamReader uniprot_mods = new StreamReader(Path.Combine(Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]), "Mods.txt")))///"ptmlist.txt")))
+            using (StreamReader uniprot_mods = new StreamReader(Path.Combine(Environment.CurrentDirectory, "Mods.txt")))///"ptmlist.txt")))
             {
                 string description = null;
                 string feature_type = null;
@@ -108,13 +106,14 @@ namespace Neo
             }
         }
 
-        public static double MonoIsoptopicMass(string baseSequence)
+        public static double MonoIsoptopicMass(string baseSequence, out string error_message)
         {
             //troubleshooter++;
             //if(Convert.ToDouble(troubleshooter)==Math.Round(Convert.ToDouble(troubleshooter)/1000)*1000)
             //{
             //MessageBox.Show(troubleshooter.ToString() + " " + baseSequence);
             //}
+            error_message = "";
             double monoisotopic_mass = Constants.WATER_MONOISOTOPIC_MASS;
             Boolean ModificationOn = false;
             string ModificationName = "";
@@ -137,7 +136,10 @@ namespace Neo
                         {
                             monoisotopic_mass += Convert.ToDouble(PTMRow[0][1]);
                         }
-                        catch { MessageBox.Show("PTM " + "'" + ModificationName + "'" + " could not be found"); }
+                        catch
+                        {
+                            error_message += "PTM " + "'" + ModificationName + "'" + " could not be found";
+                        }
                         ModificationName = "";
                     }
                 }
@@ -151,21 +153,23 @@ namespace Neo
                 }
                 if (ModificationOn == false && amino_acid != ')')
                 {
-                    monoisotopic_mass += GetMonoisotopicMass(amino_acid, baseSequence); //something making it here after (
+                    monoisotopic_mass += GetMonoisotopicMass(amino_acid, baseSequence, out string error_message2); //something making it here after (
+                    error_message += error_message2;
                 }
             }
             return monoisotopic_mass;
         }
 
-        public static double GetMonoisotopicMass(char aminoAcid, string seq)
+        public static double GetMonoisotopicMass(char aminoAcid, string seq, out string error_message)
         {
+            error_message = "";
             try
             {
                 return MONOISOTOPIC_AMINO_ACID_MASSES[aminoAcid - 'A'];
             }
             catch
             {
-                MessageBox.Show("Invalid amino acid '" + aminoAcid + "' caught " + seq);
+                error_message += "Invalid amino acid '" + aminoAcid + "' caught " + seq;
                 return 123;
             }
         }
@@ -212,14 +216,19 @@ namespace Neo
             return cleanedSequence;
         }
 
-        public static double getPTMMass(string ptmName)
+        public static double getPTMMass(string ptmName, out string error_message)
         {
+            error_message = "";
             string searchString = "Name ==" + ptmName;
             try
             {
                 return Convert.ToDouble(ModificationsDT.Select(searchString)[0]);
             }
-            catch { MessageBox.Show("Oops! We weren't able to find the PTM named " + ptmName + " in our Mods.txt file."); return 0; }
+            catch
+            {
+                error_message += "Oops! We weren't able to find the PTM named " + ptmName + " in our Mods.txt file.";
+                return 0;
+            }
         }
     }
 }

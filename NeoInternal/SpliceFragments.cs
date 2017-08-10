@@ -2,24 +2,24 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using NeoInternal;
 
-namespace Neo
+namespace NeoInternal
 {
-    class SpliceFragments
+    public class SpliceFragments
     {
         public static string test = "";
+        public static readonly int ionsUsedMassVer = 2;
+        public static double fixedModMass = 0.0; //carbamidomethyl is defaulted at 0.
 
-        private Neo neo;
         private BackgroundWorker worker = null;
-        public SpliceFragments(Neo neo, BackgroundWorker worker)
+        public SpliceFragments(BackgroundWorker worker)
         {
-            this.neo = neo;
             this.worker = worker;
         }
 
-        public List<PSM> ExperimentalTheoreticalMatching(List<PSM> psms)
+        public List<PSM> ExperimentalTheoreticalMatching(List<PSM> psms, out string error_message)
         {
+            error_message = "";
             List<PSM> candidates = new List<PSM>();
             int counter = 0;
             foreach (PSM psm in psms)
@@ -29,13 +29,15 @@ namespace Neo
                 if (psm.getExpMass() < 20000) //some incorrect charge state assignments can yield huge calculated peptide masses causing StackOverflowExceptions.
                 {
                     //preliminary filters can be removed if MassMatch calls to IonCrop are set to true.
-                    string B = IonCrop(psm.getNInfo().seq, psm.getExpMass(), 0, IonType.b, true); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
-                    string Y = IonCrop(psm.getCInfo().seq, psm.getExpMass(), 0, IonType.y, true); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
-                    for (int y = 0; y < Y.Length - Neo.ionsUsedMassVer; y++) //foreach y aa removed
+                    string B = IonCrop(psm.getNInfo().seq, psm.getExpMass(), 0, IonType.b, true, out string ee); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
+                    string Y = IonCrop(psm.getCInfo().seq, psm.getExpMass(), 0, IonType.y, true, out string eee); //used as a preliminary filter to prevent longer searches from seq ID's that are larger than the precursor mass
+                    error_message += ee + eee;
+                    for (int y = 0; y < Y.Length - ionsUsedMassVer; y++) //foreach y aa removed
                     {
-                        for (int b = 0; b < B.Length - Neo.ionsUsedMassVer; b++) //foreach b aa removed
+                        for (int b = 0; b < B.Length - ionsUsedMassVer; b++) //foreach b aa removed
                         {
-                            MassMatch(B, Y, psm, b, y); //return a FusionCandidate
+                            MassMatch(B, Y, psm, b, y, out string e); //return a FusionCandidate
+                            error_message += e;
                         }
                     }
                     if (psm.getFusionCandidates().Count()>0) //match was found
@@ -49,15 +51,17 @@ namespace Neo
         }
 
               //method was originally written recursively, but large peptides result in stackoverflow exceptions
-        public void MassMatch(string B, string Y, PSM psm, int BIndex, int YIndex) //this is the workhorse of SpliceFragments
+        public void MassMatch(string B, string Y, PSM psm, int BIndex, int YIndex, out string error_message) //this is the workhorse of SpliceFragments
         {
+            error_message = "";
             test = psm.getScan().ToString();
             double ExperimentalMass = psm.getExpMass();         
-            string BFrag = IonCrop(B, ExperimentalMass, BIndex, IonType.b, false); //returns a B ion sequence that has a mass smaller than the experimental mass by cleaving C term AA
+            string BFrag = IonCrop(B, ExperimentalMass, BIndex, IonType.b, false, out string e4); //returns a B ion sequence that has a mass smaller than the experimental mass by cleaving C term AA
             //BIndex = B.Length - BFrag.Length; //added 11/8/16 Useful first pass to record how many AA have been cleaved from C term 
-            string YFrag = IonCrop(Y, ExperimentalMass, YIndex, IonType.y, false); //returns a Y ion sequence that has a mass smaller than the experimental mass by cleaving N term AA
+            string YFrag = IonCrop(Y, ExperimentalMass, YIndex, IonType.y, false, out string e3); //returns a Y ion sequence that has a mass smaller than the experimental mass by cleaving N term AA
             //YIndex = Y.Length - YFrag.Length; //added 11/8/16 Useful first pass to record how many AA have been cleaved from N term
-            double TheoreticalMass = MassCalculator.MonoIsoptopicMass(BFrag) + MassCalculator.MonoIsoptopicMass(YFrag) - Constants.WATER_MONOISOTOPIC_MASS + Neo.fixedModMass; //water added once in b and once in y
+            double TheoreticalMass = MassCalculator.MonoIsoptopicMass(BFrag, out string e) + MassCalculator.MonoIsoptopicMass(YFrag, out string e2) - Constants.WATER_MONOISOTOPIC_MASS + fixedModMass; //water added once in b and once in y
+            error_message += e3 + e4 + e + e2;
 
             //add PTM masses
             foreach (PTM ptm in psm.getNInfo().getPTMs())
@@ -75,11 +79,11 @@ namespace Neo
                 }
             }
 
-            if (YFrag.Length < Neo.ionsUsedMassVer) //If the number of AA from the C-term peptide is less than desired amount, end recursion. 
+            if (YFrag.Length < ionsUsedMassVer) //If the number of AA from the C-term peptide is less than desired amount, end recursion. 
             {
                 //we're done
             }
-            else if (BFrag.Length < Neo.ionsUsedMassVer) //If the number of AA from the N-term peptide is less than desired amount, start over loop and remove a single aa from the C-term
+            else if (BFrag.Length < ionsUsedMassVer) //If the number of AA from the N-term peptide is less than desired amount, start over loop and remove a single aa from the C-term
             {
              //   MassMatch(B, Y, psm, 0, YIndex+1);
             }
@@ -152,8 +156,9 @@ namespace Neo
 
         //This method removes the number of amino acids specified by FragNumber from the respecitve terminus specified by ion of IonSequence
         //If checkToRemoveExtraAA is true, additional AA will be removed to achieve a theoretical mass less than the Experimental mass
-        public string IonCrop(string IonSequence, double ExperimentalMass, int FragNumber, IonType ion, bool checkToRemoveExtraAA)
+        public string IonCrop(string IonSequence, double ExperimentalMass, int FragNumber, IonType ion, bool checkToRemoveExtraAA, out string error_message)
         {
+            error_message = "";
             string IonFrag;
             if (ion == IonType.b)
             {
@@ -189,7 +194,8 @@ namespace Neo
                 return IonFrag;
             }
             else {
-                double IonMass = MassCalculator.MonoIsoptopicMass(IonFrag);
+                double IonMass = MassCalculator.MonoIsoptopicMass(IonFrag, out string e);
+                error_message += e;
                 if (IonMass < ExperimentalMass) //end if the mass of the fragment is lower than the experimental
                 {
                     return IonFrag;
@@ -197,7 +203,9 @@ namespace Neo
                 else //call the function again to remove another amino acid.
                 {
                     FragNumber++;
-                    return IonCrop(IonSequence, ExperimentalMass, FragNumber, ion, true);
+                    string x = IonCrop(IonSequence, ExperimentalMass, FragNumber, ion, true, out string e2);
+                    error_message += e2;
+                    return x;
                 }
             }
         }

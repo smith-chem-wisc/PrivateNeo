@@ -27,22 +27,24 @@ namespace NeoInternal
             this.worker = worker;
         }
 
-        public void FindAmbiguity(List<PSM> candidates,List<TheoreticalProtein> theoreticalProteins)
+        public void FindAmbiguity(List<PSM> candidates, List<TheoreticalProtein> theoreticalProteins, out string error_message)
         {
+            error_message = "";
             ReadProteins(theoreticalProteins);
             ReadMassDictionary();
             for (int i = 0; i < candidates.Count(); i++) //must be mutable while iterating
             {
                 PSM psm = candidates[i];
                 psm.fusionType = FusionCandidate.FusionType.TS; //for some maddening reason, this is not arriving here as trans, but instead translated
-                if (IsTooMessy(psm)) //having explosion of combinations when greater than 3 consequtive peaks producing tens of thousands of sequences ids, causes hanging
+                if (IsTooMessy(psm, out string e)) //having explosion of combinations when greater than 3 consequtive peaks producing tens of thousands of sequences ids, causes hanging
                 {
                     candidates.Remove(psm);
                     i--;
+                    error_message += e;
                 }
                 else
                 {
-                    if (GeneratePossibleSequences(psm)) //return true if fewer than specified number of ambiguities
+                    if (GeneratePossibleSequences(psm, out string error_message1)) //return true if fewer than specified number of ambiguities
                     {
                         if (!PossibleCandidate(psm))
                         {
@@ -71,21 +73,24 @@ namespace NeoInternal
                         }
                     }*/
                     }
+                    error_message += error_message1;
                 }
                 this.worker.ReportProgress(Convert.ToInt16((Convert.ToDouble(i) / Convert.ToDouble(candidates.Count())) * 100));
             }
             // RemoveTranslatablePeptides(candidates);
         }
 
-        public bool IsTooMessy(PSM psm) //return true if too messy for confident identification
+        public bool IsTooMessy(PSM psm, out string error_message) //return true if too messy for confident identification
         {
+            error_message = "";
             List<string> baseSequences = new List<string>();
             int currentBestScore = 0;
             for (int index = 0; index < psm.getFusionCandidates().Count(); index++)
             {
                 bool badID = false;
                 FusionCandidate fc = psm.getFusionCandidates()[index];
-                findIons(fc, psm);
+                findIons(fc, psm, out string error_message1);
+                error_message += error_message1;
                 int consecutiveMissedCounter = 0;
                 int totalHitCounter = 0;
                 foreach (bool b in fc.getFoundIons())
@@ -141,8 +146,9 @@ namespace NeoInternal
         }
 
         //use ion hits to know where peaks have been found by morpheus and where there is ambiguity
-        public static void findIons(FusionCandidate fusionCandidate, PSM psm)
+        public static void findIons(FusionCandidate fusionCandidate, PSM psm, out string error_message)
         {
+            error_message = "";
             double[] nPeaks = psm.getNInfo().getPeakHits(); //get peaks
             double[] cPeaks = psm.getCInfo().getPeakHits();
             fusionCandidate.makeFoundIons();
@@ -155,7 +161,8 @@ namespace NeoInternal
                 //B IONS//
                 if (ionsUsed.Contains(IonType.b))
                 {
-                    double bTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(0, 1 + i)) - Constants.WATER_MONOISOTOPIC_MASS; 
+                    double bTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(0, 1 + i), out string error_message2) - Constants.WATER_MONOISOTOPIC_MASS;
+                    error_message += error_message2;
                     foreach (PTM ptm in psm.getNInfo().getPTMs())
                     {
                         if (ptm.index <= i)
@@ -174,7 +181,8 @@ namespace NeoInternal
                 //Y IONS//
                 if (ionsUsed.Contains(IonType.y))
                 {
-                    double yTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(candSeq.Length - 1 - i, i + 1));
+                    double yTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(candSeq.Length - 1 - i, i + 1), out string error_message3);
+                    error_message += error_message3;
                     foreach (PTM ptm in psm.getCInfo().getPTMs())
                     {
                         if (ptm.index >= candSeq.Length - 2 - i)
@@ -193,7 +201,8 @@ namespace NeoInternal
                 //C IONS//
                 if (ionsUsed.Contains(IonType.c))
                 {
-                    double cTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(0, 1 + i)) - Constants.WATER_MONOISOTOPIC_MASS + Constants.nitrogenMonoisotopicMass + 3 * Constants.hydrogenMonoisotopicMass; 
+                    double cTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(0, 1 + i), out string error_message4) - Constants.WATER_MONOISOTOPIC_MASS + Constants.nitrogenMonoisotopicMass + 3 * Constants.hydrogenMonoisotopicMass;
+                    error_message += error_message4;
                     foreach (PTM ptm in psm.getNInfo().getPTMs())
                     {
                         if (ptm.index <= i)
@@ -212,7 +221,8 @@ namespace NeoInternal
                 //ZDOT IONS//
                 if (ionsUsed.Contains(IonType.zdot))
                 {
-                    double zdotTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(candSeq.Length - 1 - i, i + 1)) - Constants.nitrogenMonoisotopicMass - 2 * Constants.hydrogenMonoisotopicMass;
+                    double zdotTheoMass = MassCalculator.MonoIsoptopicMass(candSeq.Substring(candSeq.Length - 1 - i, i + 1), out string error_message5) - Constants.nitrogenMonoisotopicMass - 2 * Constants.hydrogenMonoisotopicMass;
+                    error_message += error_message5;
                     foreach (PTM ptm in psm.getCInfo().getPTMs())
                     {
                         if (ptm.index >= candSeq.Length - 2 - i)
@@ -233,15 +243,17 @@ namespace NeoInternal
             foundIons[foundIons.Count() - 1] = true;//A|B|C|D|E|F|K| where the whole peptide peak is always placed arbitrarly at the c term
         }
         
-        public void Replacer(PSM psm, List<IonType> ionsUsed, double productMassToleranceDa)
+        public void Replacer(PSM psm, List<IonType> ionsUsed, double productMassToleranceDa, out string error_message)
         {
+            error_message = "";
             //operate under assumption that no peak provides a greater confidence for Q than AG, and a peak for AG prevents Q from matching.
             string[] oldAA = new string[] { "I", "L" };//, "Q", "AG", "GA" }; //Q is only transformed into AG, since GA will be formed during flippage
             string[] newAA = new string[] { "L", "I" };//, "AG", "Q", "Q" };
             //produce alternative sequences
             foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
             {
-                findIons(fusionCandidate, psm);
+                findIons(fusionCandidate, psm, out string error_message1);
+                error_message += error_message1;
             }
             bool done = false;
             int globalIndex = 0;
@@ -257,7 +269,8 @@ namespace NeoInternal
                         done = false; //at least one sequence is still as long as the globalIndex, so we're not done
                         for (int aa = 0; aa < oldAA.Count(); aa++)
                         {
-                            ExchangeAA(psm, fusionCandidate, globalIndex, tempList, oldAA[aa], newAA[aa]);
+                            ExchangeAA(psm, fusionCandidate, globalIndex, tempList, oldAA[aa], newAA[aa], out string e);
+                            error_message += e;
                         }
                     }
                 }
@@ -271,7 +284,8 @@ namespace NeoInternal
                 {
                     if (!foundSeq.Contains(tempCandidate.seq))
                     {
-                        findIons(tempCandidate, psm);
+                        findIons(tempCandidate, psm, out string e2);
+                        error_message += e2;
                         psm.getFusionCandidates().Add(tempCandidate);;
                     }
                 }
@@ -307,7 +321,7 @@ namespace NeoInternal
             aa[j] = temp;
         }
 
-        public bool Flipper(PSM psm) //IonType ion, string seq, double[] peaks) //This method flips aa with no detected peaks between them
+        public bool Flipper(PSM psm, out string error_message) //IonType ion, string seq, double[] peaks) //This method flips aa with no detected peaks between them
         {
             /*     MessageBox.Show("In Flipper");
                  string str1 = "";
@@ -316,6 +330,7 @@ namespace NeoInternal
                      str1 += b;
                  }
                  MessageBox.Show(str1);*/
+            error_message = "";
             bool done = false; //use to determine if we are outside the length index of all possible peptides
             int globalIndex = 0;
             //Do substitutions specified above
@@ -376,7 +391,8 @@ namespace NeoInternal
                                         {
                                             //                file.WriteLine('\t' + "Added " + novelSeq);
                                             tempCandidate.makeFoundIons(); //has a new found Ions because length is no longer the same
-                                            findIons(tempCandidate, psm);
+                                            findIons(tempCandidate, psm, out string e);
+                                            error_message += e;
                                             tempCandidates.Add(tempCandidate);
                                         }
                                     }
@@ -405,8 +421,9 @@ namespace NeoInternal
             // }
         }
 
-        public void ExchangeAA(PSM psm, FusionCandidate fusionCandidate, int globalIndex, List<FusionCandidate> tempList, string oldAA, string newAA)
+        public void ExchangeAA(PSM psm, FusionCandidate fusionCandidate, int globalIndex, List<FusionCandidate> tempList, string oldAA, string newAA, out string error_message)
         {
+            error_message = "";
             int fragLength = oldAA.Length;
             string fusionSeq = fusionCandidate.seq;
             if (globalIndex + fragLength <= fusionCandidate.seq.Length) //if won't crash
@@ -431,7 +448,8 @@ namespace NeoInternal
                         FusionCandidate tempCandidate = new FusionCandidate(novelSeq);
                         if (oldAA.Length != newAA.Length)
                         {
-                            findIons(tempCandidate, psm);
+                            findIons(tempCandidate, psm, out string e);
+                            error_message += e;
                         }
                         else
                         {
@@ -447,7 +465,7 @@ namespace NeoInternal
         {
             List<double> tempKeys = new List<double>();
 
-            using (StreamReader masses = new StreamReader(Path.Combine(Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]), "Dictionary" + maxMissingConsecutivePeaks + ".txt"))) //file located in Morpheus folder
+            using (StreamReader masses = new StreamReader(Path.Combine(Environment.CurrentDirectory, "Dictionary" + maxMissingConsecutivePeaks + ".txt"))) //file located in Morpheus folder
             {
                 while (masses.Peek() != -1)
                 {
@@ -466,12 +484,14 @@ namespace NeoInternal
             }
         }
 
-        public bool GeneratePossibleSequences(PSM psm) //returns false if over the specified number of sequences are generated
+        public bool GeneratePossibleSequences(PSM psm, out string error_message) //returns false if over the specified number of sequences are generated
         {
+            error_message = "";
             List<string> foundSeq = new List<string>(); //get list of all FP sequences
             foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
             {
-                findIons(fusionCandidate, psm); //populate the foundIons array
+                findIons(fusionCandidate, psm, out string error_message1); //populate the foundIons array
+                error_message += error_message1;
                 foundSeq.Add(fusionCandidate.seq);
             }
             bool done = false;
@@ -506,7 +526,8 @@ namespace NeoInternal
 
 
                             string ambiguousFrag = fusionSeq.Substring(mostRecent + 1, globalIndex - mostRecent);
-                            double key = MassCalculator.MonoIsoptopicMass(ambiguousFrag);
+                            double key = MassCalculator.MonoIsoptopicMass(ambiguousFrag, out string error_message2);
+                            error_message += error_message2;
 
                             List<string> combinations = new List<string>();
 
@@ -576,7 +597,8 @@ namespace NeoInternal
                             if (!foundSeq.Contains(newfc.seq)) //if new FP sequence, add it.
                             {
                                 foundSeq.Add(newfc.seq);
-                                findIons(newfc,psm);
+                                findIons(newfc, psm, out string error_message3);
+                                error_message += error_message3;
                                 psm.getFusionCandidates().Add(newfc);
                             }
                         }

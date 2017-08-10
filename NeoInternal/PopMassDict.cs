@@ -12,8 +12,9 @@ namespace NeoInternal
         public static double[] keys;
         public static char[] AANames = new char[20] { 'G', 'A', 'S', 'P', 'V', 'T', 'L', 'I', 'N', 'D', 'Q', 'K', 'E', 'M', 'H', 'F', 'R', 'C', 'Y', 'W' }; //20 common AA, ordered by mass assuming carbamido
 
-        public void PopulateMassDictionary()
+        public string PopulateMassDictionary()
         {
+            string error_message = "";
             List<double> tempKeys = new List<double>();
             double maxMass = (maxMissingConsecutivePeaks + 1) * 186.079313 + (Constants.WATER_MONOISOTOPIC_MASS + 3); //If one sequence knocks it out of range, the next might not (VVVVW vs VVVVV where the first is out of range but the second is not) W-G prevents this     //peaks+1 for converting missed peaks into number of ambiguous aa
             int mer = (4) * (maxMissingConsecutivePeaks + 1); //maximum length allowed (4>W/G>3)  //peaks+1 for converting missed peaks into number of ambiguous aa
@@ -43,7 +44,8 @@ namespace NeoInternal
                 }
 
                 //if new seq is within range
-                double fragMass = MassCalculator.MonoIsoptopicMass(seq);
+                double fragMass = MassCalculator.MonoIsoptopicMass(seq, out string e);
+                error_message += e;
                 if (fragMass < maxMass)
                 {
                     var rounded = Math.Round(fragMass, decimalDigitsForFragmentMassRounding);
@@ -146,6 +148,7 @@ namespace NeoInternal
                           //MessageBox.Show("No sequences found for " + key);
                       }
                   }*/
+            return error_message;
         }
     }
 }

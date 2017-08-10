@@ -66,18 +66,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ExportData.cs" />
-    <Compile Include="MassCalculator.cs" />
     <Compile Include="Neo.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Neo.Designer.cs">
       <DependentUpon>Neo.cs</DependentUpon>
     </Compile>
-    <Compile Include="ImportData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpliceFragments.cs" />
     <Compile Include="Test.cs" />
     <EmbeddedResource Include="Neo.resx">
       <DependentUpon>Neo.cs</DependentUpon>
@@ -92,6 +88,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="amino_acids.tsv" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -110,6 +107,12 @@
       <Project>{6721d23d-0f39-494a-9bee-09fb300cf359}</Project>
       <Name>NeoInternal</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Dictionary1.txt" />
+    <Content Include="Dictionary2.txt" />
+    <Content Include="Mods.txt" />
+    <Content Include="xmlHeader.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

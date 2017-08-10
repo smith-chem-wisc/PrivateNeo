@@ -2,16 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
-using NeoInternal;
 
-namespace Neo
+namespace NeoInternal
 {
     public class ExportData
     {
         public static string folder;
 
-        public static void ExportAll(List<PSM> psms, string databaseFileName)
+        public static string ExportAll(List<PSM> psms, string databaseFileName)
         {
             folder = DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss");
             string path = "";
@@ -21,16 +19,20 @@ namespace Neo
                 path += temp[i]+'\\';
             }
             Directory.CreateDirectory(path + folder);
-            ExportCandidates(psms,path);
+            ExportCandidates(psms,path, out string e);
+            if (e.Length > 0) return e;
             ExportFullFASTA(psms, databaseFileName, path);
             ExportFASTAAppendix(psms, databaseFileName, path);
-            ExportFalsePositiveAppendix(psms, databaseFileName, path);
+            ExportFalsePositiveAppendix(psms, databaseFileName, path, out string e2);
+            if (e2.Length > 0) return e2;
             ExportFilteredFusionPeptideAppendix(psms, databaseFileName, path);
+            return "";
         }
 
-        public static void ExportCandidates(List<PSM> psms, string path)
+        public static void ExportCandidates(List<PSM> psms, string path, out string error_message)
         {
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path+folder+ @"\" + folder + "ExportedFusionCandidates.txt"))
+            error_message = "";
+            using (StreamWriter file = new StreamWriter(path+folder+ @"\" + folder + "ExportedFusionCandidates.txt"))
             {
                 file.WriteLine("Scan" + '\t' + "ExperimentalMass" + '\t' + "OriginalNSequence" + '\t' + "OriginalNScore" + '\t' + "OriginalCSequence" + '\t' + "OriginalCScore" + '\t' + "SampleSequence" + '\t' + "Ambiguity" + '\t' + "ProbableType" + '\t' + "MostProbableSequenceJunctions" + '\t' + "MostProbableSequence(s)" + '\t' + "MostProbableParents" + '\t' + "AllPossibleSequenceJunctions" + '\t' + "AllPossibleSequence(s)" + '\t' + "AllPossibleParent(s)" + '\t' + "NumberOfPossibleSequences" + "PotentialFalsePositives");
                 foreach (PSM psm in psms)
@@ -115,7 +117,8 @@ namespace Neo
                     mostProbableSequences = mostProbableSequences.Substring(0, mostProbableSequences.Length - 1); //remove last "|"
 
                     string ambiguity = "";
-                    AlternativeSequences.findIons(psm.getFusionCandidates()[indexOfFirstProbableSequence], psm); //this should be carried over, but it's not...
+                    AlternativeSequences.findIons(psm.getFusionCandidates()[indexOfFirstProbableSequence], psm, out string e); //this should be carried over, but it's not...
+                    error_message += e;
                     bool[] foundIons = psm.getFusionCandidates()[indexOfFirstProbableSequence].getFoundIons();
                     char[] firstSeq = psm.getFusionCandidates()[indexOfFirstProbableSequence].seq.ToCharArray();
                  //   if(foundIons.Count()==firstSeq.Count()) //prevent crashing if something went wrong
@@ -181,7 +184,7 @@ namespace Neo
         public static void ExportFullFASTA(List<PSM> psms, string databaseFileName, string path)
         {
             //@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\"
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path + folder + @"\" + folder + "FullFusionDatabase.fasta"))
+            using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FullFusionDatabase.fasta"))
             {
                 //copy database
                 string[] FASTARead = File.ReadAllLines(databaseFileName);
@@ -251,7 +254,7 @@ namespace Neo
         public static void ExportFASTAAppendix(List<PSM> psms, string databaseFileName, string path)
         {
             //@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\"
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path + folder + @"\" + folder + "FusionDatabaseAppendix.fasta"))
+            using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FusionDatabaseAppendix.fasta"))
             {
                 foreach (PSM psm in psms)
                 {
@@ -281,10 +284,11 @@ namespace Neo
                 }
             }
         }
-        public static void ExportFalsePositiveAppendix(List<PSM> psms, string databaseFileName, string path)
+        public static void ExportFalsePositiveAppendix(List<PSM> psms, string databaseFileName, string path, out string error_message)
         {
+            error_message = "";
             //@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\"
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path + folder + @"\" + folder + "FalsePositiveAppendix.fasta"))
+            using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FalsePositiveAppendix.fasta"))
             {
                 foreach (PSM psm in psms)
                 {
@@ -314,9 +318,9 @@ namespace Neo
                 }
             }
 
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path + folder + @"\" + folder + "FalsePositiveAppendix.xml"))
+            using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FalsePositiveAppendix.xml"))
             {
-                using (StreamReader header = new StreamReader(Path.Combine(Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]), "xmlHeader.txt"))) //file located in Morpheus folder
+                using (StreamReader header = new StreamReader(Path.Combine(Environment.CurrentDirectory, "xmlHeader.txt"))) //file located in Morpheus folder
                 {
                     while (header.Peek() != -1)
                     {
@@ -460,7 +464,7 @@ namespace Neo
                                         }
                                         break;
                                     default:
-                                        MessageBox.Show("PTM " + ptmName + " was not found");
+                                        error_message += "PTM " + ptmName + " was not found";
                                         break;
                                 }
                             }
@@ -474,7 +478,7 @@ namespace Neo
             }
         }
 
-        private static void printPTMInfo(string ptmName, int position, System.IO.StreamWriter file)
+        private static void printPTMInfo(string ptmName, int position, StreamWriter file)
         {
             file.WriteLine("<feature type=" + '"' + "modified residue" + '"' + " description=" + '"' + ptmName + '"' + ">");
             file.WriteLine("<location>");
@@ -482,9 +486,10 @@ namespace Neo
             file.WriteLine("</location>");
             file.WriteLine("</feature>");
         }
+
         public static void ExportFilteredFusionPeptideAppendix(List<PSM> psms, string databaseFileName, string path)
         {
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(path + folder + @"\" + folder + "FilteredFusionDatabaseAppendix.fasta"))
+            using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FilteredFusionDatabaseAppendix.fasta"))
             {
                 foreach (PSM psm in psms)
                 {

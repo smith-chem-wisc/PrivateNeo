@@ -1,14 +1,12 @@
-﻿using NeoInternal;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
 
-namespace Neo
+namespace NeoInternal
 {
-    class ImportData
+    public class ImportData
     {
         private BackgroundWorker worker = null;
 
@@ -17,8 +15,9 @@ namespace Neo
             this.worker = worker;
         }
 
-        public List<PSM> ImportPSMs(string nFileName, string cFileName)
+        public List<PSM> ImportPSMs(string nFileName, string cFileName, out string error_message)
         {
+            error_message = "";
             List<PSM> MMOutput = new List<PSM>();
             //     try
             //   {
@@ -78,7 +77,8 @@ namespace Neo
                 string[] line = nInput[i].Split('\t').ToArray();
              //   if (Convert.ToDouble(line[matchedIonCountsIndex]) >= 4)
                 {
-                    InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex]);
+                    InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex], out string e);
+                    error_message += e;
                     nAssignment.Add(id);
                 }
             }
@@ -88,7 +88,8 @@ namespace Neo
                 string[] line = cInput[i].Split('\t').ToArray();
              //   if (Convert.ToDouble(line[matchedIonCountsIndex]) >= 4)
                 {
-                    InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex]);
+                    InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex], out string e);
+                    error_message += e;
                     cAssignment.Add(id);
                 }
             }
@@ -142,8 +143,9 @@ namespace Neo
             return temp;
         }
 
-        public List<TheoreticalProtein> ImportDatabase(string databaseFileName)
+        public List<TheoreticalProtein> ImportDatabase(string databaseFileName, out string error_message)
         {
+            error_message = "";
             List<TheoreticalProtein> database = new List<TheoreticalProtein>();
             string[] FASTARead = File.ReadAllLines(databaseFileName);
             int nr = FASTARead.GetLength(0);
@@ -175,7 +177,10 @@ namespace Neo
                 {
                     database[i].id = (database[i].id.Split('|').ToArray()[1]);
                 }
-                catch { MessageBox.Show("FASTA FAIL " + database[i].id); } //usually caused by missing >sp|
+                catch
+                {
+                    error_message += "FASTA FAIL " + database[i].id;
+                } //usually caused by missing >sp|
             }
             return database;
         }
