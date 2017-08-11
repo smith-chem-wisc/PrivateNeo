@@ -130,10 +130,7 @@ namespace NeoInternal
 
                    string ambiguity = "";
                     AlternativeSequences.findIons(psm.getFusionCandidates()[indexOfFirstProbableSequence], psm, out string e); //this should be carried over, but it's not...
-                   lock (mutableError_message)
-                    {
                         mutableError_message += e;
-                    }
                     bool[] foundIons = psm.getFusionCandidates()[indexOfFirstProbableSequence].getFoundIons();
                     char[] firstSeq = psm.getFusionCandidates()[indexOfFirstProbableSequence].seq.ToCharArray();
                    //   if(foundIons.Count()==firstSeq.Count()) //prevent crashing if something went wrong
@@ -178,8 +175,6 @@ namespace NeoInternal
                     {
                         allPossibleParents = allPossibleParents.Substring(0, 30000);
                     }
-                   //  }
-                   //file.WriteLine("Scan" +                     '\t' + "ExperimentalMass" +         '\t' + "OriginalBSequence" + '\t' + "OriginalBScore" +      '\t' + "OriginalYSequence" +    '\t' + "OriginalYScore" +       '\t' + "SampleSequence" +                                        '\t' + "Ambiguity" +       '\t' + "ProbableType" +     '\t' + "MostProbablySequenceJunctions"+ '\t' + "MostProbableSequence(s)" +            '\t' + "MostProbableParents" + '\t' + "AllPossibleSequenceJunctions" + '\t' + "AllPossibleSequence(s)" + '\t' + "AllPossibleParent(s)" + '\t' + "NumberOfPossibleSequences");
                    lock (file)
                     {
                         file.WriteLine(psm.getScan().ToString() + '\t' + psm.getExpMass().ToString() + '\t' + psm.getNInfo().seq + '\t' + psm.getNInfo().score + '\t' + psm.getCInfo().seq + '\t' + psm.getCInfo().score + '\t' + psm.getFusionCandidates()[indexOfFirstProbableSequence].seq + '\t' + ambiguity + '\t' + psm.fusionType.ToString() + '\t' + mostProbableSequences + '\t' + mostProbableSequences.Replace("-", "") + '\t' + mostProbableParents + '\t' + allPossibleSequences + '\t' + allPossibleSequences.Replace("-", "") + '\t' + allPossibleParents + '\t' + psm.getFusionCandidates().Count().ToString() + '\t' + potentialFalsePositives);

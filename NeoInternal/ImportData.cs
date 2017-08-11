@@ -19,8 +19,6 @@ namespace NeoInternal
         {
             error_message = "";
             List<PSM> MMOutput = new List<PSM>();
-            //     try
-            //   {
             string[] nInput = File.ReadAllLines(nFileName);
             string[] cInput = File.ReadAllLines(cFileName);
 
@@ -37,37 +35,21 @@ namespace NeoInternal
             for (int col = 0; col < header.Length; col++)
             {
                 if (header[col].Equals("File Name"))
-                {
                     fileNameIndex = col;
-                }
                 else if (header[col].Equals("Scan Number"))
-                {
                     scanNumberIndex = col;
-                }
                 else if (header[col].Equals("Precursor Mass"))
-                {
                     scanPrecursorMassIndex = col;
-                }
                 else if (header[col].Equals("Protein Accession"))
-                {
                     proteinAccessionIndex = col;
-                }
                 else if (header[col].Equals("Base Sequence")) //"FullSequence" should be used for the detection of FPs containing PTMs and for missed cleave/nonspecific peptides containing PTMs
-                {
                     fullSequenceIndex = col;
-                }
                 else if (header[col].Equals("Matched Ion Masses"))
-                {
                     matchedIonsIndex = col;
-                }
                 else if (header[col].Equals("Matched Ion Counts"))
-                {
                     matchedIonCountsIndex = col;
-                }
                 else if (header[col].Equals("Score"))
-                {
                     scoreIndex = col;
-                }
             }
             List<InitialID> nAssignment = new List<InitialID>();
             List<InitialID> cAssignment = new List<InitialID>();
@@ -75,23 +57,17 @@ namespace NeoInternal
             for (int i = 1; i < nInput.Count(); i++)
             {
                 string[] line = nInput[i].Split('\t').ToArray();
-             //   if (Convert.ToDouble(line[matchedIonCountsIndex]) >= 4)
-                {
-                    InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex], out string e);
-                    error_message += e;
-                    nAssignment.Add(id);
-                }
+                InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex], out string e);
+                error_message += e;
+                nAssignment.Add(id);
             }
 
             for (int i = 1; i < cInput.Count(); i++)
             {
                 string[] line = cInput[i].Split('\t').ToArray();
-             //   if (Convert.ToDouble(line[matchedIonCountsIndex]) >= 4)
-                {
-                    InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex], out string e);
-                    error_message += e;
-                    cAssignment.Add(id);
-                }
+                InitialID id = new InitialID(line[fileNameIndex], Convert.ToInt32(line[scanNumberIndex]), Convert.ToDouble(line[scanPrecursorMassIndex]), line[proteinAccessionIndex], line[fullSequenceIndex], line[matchedIonsIndex], line[scoreIndex], out string e);
+                error_message += e;
+                cAssignment.Add(id);
             }
             //sort by scan number
             List<InitialID> nAssignmentSorted = nAssignment.OrderBy(o => o.getScan()).ToList();
@@ -100,8 +76,6 @@ namespace NeoInternal
             //remove scans not found in both files
             for (int i = 0; i < nAssignmentSorted.Count(); i++)
             {
-                //    neo.SetProgressMax(bAssignmentSorted.Count());
-                //  neo.IncrementProgress();
                 this.worker.ReportProgress(Convert.ToInt16((Convert.ToDouble(i) / Convert.ToDouble(nAssignmentSorted.Count())) * 100));
                 if (i < cAssignmentSorted.Count())
                 {
@@ -124,13 +98,6 @@ namespace NeoInternal
                 }
             }
             return MMOutput;
-            /*     }
-                 catch (System.IO.IOException e)
-                 {
-                     MessageBox.Show("Looks like one of your files is open. Please close it and try again.");
-                     System.Environment.Exit(0);
-                     return new List<PSM>();
-                 }*/
         }
 
         public static string cleanSeq(string fullSeq)
@@ -153,8 +120,6 @@ namespace NeoInternal
             string FullSequence = "";
             for (int r = 0; r < nr; r++)
             {
-                //  neo.SetProgressMax(nr);
-                //neo.IncrementProgress();
                 this.worker.ReportProgress(Convert.ToInt16((Convert.ToDouble(r) / Convert.ToDouble(nr)) * 100));
                 string lr = FASTARead[r];
                 if (lr.StartsWith(">"))

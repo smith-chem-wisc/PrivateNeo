@@ -43,10 +43,9 @@ namespace Neo
             List<PSM> MMOutput=new List<PSM>();
             List<TheoreticalProtein> database = new List<TheoreticalProtein>();
             bool passedFileIO = true;
-         //   try
             {
                 MMOutput = import.ImportPSMs(nFileName, cFileName, out string error_message);
-                if(error_message.Length>0)
+                if (error_message.Length > 0)
                     MessageBox.Show(error_message);
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading database... (Task 1/6)"; }));
@@ -54,83 +53,7 @@ namespace Neo
                 database = import.ImportDatabase(databaseFileName, out string error_message2);
                 if (error_message2.Length > 0)
                     MessageBox.Show(error_message2);
-
-                {
-                    //Cool bit of code to identify number of random sequences of a specific length existing within a database. 5mer takes ~3 hours.
-                    /*    int mer = 5;
-                        int[] indexes = new int[mer];
-                        for (int i = 0; i < mer; i++)
-                        {
-                            indexes[i] = 0;
-                        }
-                        int[] hits = new int[mer];
-                        string seq = "";
-                        int length = 1;
-
-                        while (indexes[0] < AANames.Count())
-                        {
-                            //get new seq
-                            seq = "";
-
-                            for (int n = 0; n < length; n++)
-                            {
-                                seq += AANames[indexes[n]];
-                            }
-
-                            //if new seq is present in db
-                            if (database.AsParallel().Where(x => x.seq.Contains(seq)).Any())
-                            {
-                                hits[length-1]++;
-                                if (mer != length) //if not last position
-                                {
-                                    length++; //allow m to increase
-                                }
-                                else //don't increment length, we're happy right now!
-                                {
-                                    if (indexes[length-1] < AANames.Count() - 1) //if not last aa in possible aa
-                                    {
-                                        indexes[length - 1]++;
-                                    }
-                                    else //if it is, we need to go back a bit
-                                    {
-                                        indexes[length - 1] = 0;
-                                        indexes[length - 2]++; //could cause crashing with weird aa
-                                        length--;
-                                    }
-                                }
-                            }
-                            else //if not hit, move back one
-                            {
-                                indexes[length - 1]++;
-                            }
-
-                            for (int i = indexes.Count()-1; i >= 0; i--)
-                            {
-                                if (indexes[i] == AANames.Count())
-                                {
-                                    if (i > 0)
-                                    {
-                                        length--;
-                                        indexes[i] = 0;
-                                        indexes[i - 1]++;
-                                    }
-                                }
-                            }
-                        }
-                        foreach (int i in hits)
-                        {
-                            MessageBox.Show(i.ToString());
-                        }*/
-                }
-
-
-        }
-        //    catch
-          //  {
-            //    MessageBox.Show("We encountered some issues while reading in your files. Common problems include: Column header names changed from MM v 0.0.108, an input file is currently open, or the absolute file path is too long. Please check your input and try again.");
-              //  passedFileIO = false;
-                //this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = ":("; }));              
-            //}
+            }
             if (passedFileIO)
             {
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Splicing peptides... (Task 2/6)"; }));
@@ -139,9 +62,6 @@ namespace Neo
                 List<PSM> candidates = sf.ExperimentalTheoreticalMatching(MMOutput, out string error_message);
                 if (error_message.Length > 0)
                     MessageBox.Show(error_message);
-      //          MessageBox.Show(candidates.Count().ToString() + " putative fusion peptide PSMs were selected");
-
-               // this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading Fragment Index... (Task 3/6)"; }));
                 ClearProgress();
                 AlternativeSequences altSeq = new AlternativeSequences(backgroundWorker1);
 
@@ -157,9 +77,6 @@ namespace Neo
                 rfp.FindCommonFalsePositives(candidates, database, out string error_message3);
                 if (error_message3.Length > 0)
                     MessageBox.Show(error_message3);
-
-                //        MessageBox.Show("After filtering, "+candidates.Count().ToString() + " putative fusion peptides were generated");
-
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Exporting results... (Task 5/6)"; }));
                 ClearProgress();
                 ExportData ed = new ExportData(backgroundWorker1);
@@ -305,69 +222,46 @@ namespace Neo
 
         #endregion Private GUI
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
+        private void label1_Click(object sender, EventArgs e){ }
 
         private void bCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             if(bCheckBox.Checked)
-            {
                 AlternativeSequences.ionsUsed.Add(IonType.b);
-            }
             else
-            {
                 AlternativeSequences.ionsUsed.Remove(IonType.b);
-            }
         }
 
         private void yCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             if (yCheckBox.Checked)
-            {
                 AlternativeSequences.ionsUsed.Add(IonType.y);
-            }
             else
-            {
                 AlternativeSequences.ionsUsed.Remove(IonType.y);
-            }
         }
 
         private void cCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             if (cCheckBox.Checked)
-            {
                 AlternativeSequences.ionsUsed.Add(IonType.c);
-            }
             else
-            {
                 AlternativeSequences.ionsUsed.Remove(IonType.c);
-            }
         }
 
         private void zdotCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             if (zdotCheckBox.Checked)
-            {
                 AlternativeSequences.ionsUsed.Add(IonType.zdot);
-            }
             else
-            {
                 AlternativeSequences.ionsUsed.Remove(IonType.zdot);
-            }
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             if(checkBox1.Checked)
-            {
                 FalsePositives.generateDecoys = true;
-            }
             else
-            {
                 FalsePositives.generateDecoys = false;
-            }
         }
     }
 }
