@@ -1,15 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace NeoInternal
 {
     public class ExportData
     {
         public static string folder;
+        private readonly BackgroundWorker worker;
 
-        public static string ExportAll(List<PSM> psms, string databaseFileName)
+        public ExportData(BackgroundWorker worker)
+        {
+            this.worker = worker;
+        }
+
+        public string ExportAll(List<PSM> psms, string databaseFileName)
         {
             folder = DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss");
             string path = "";
@@ -20,39 +28,43 @@ namespace NeoInternal
             }
             Directory.CreateDirectory(path + folder);
             ExportCandidates(psms,path, out string e);
-            if (e.Length > 0) return e;
+            if (e.Length > 0)
+                return e;
             ExportFullFASTA(psms, databaseFileName, path);
             ExportFASTAAppendix(psms, databaseFileName, path);
             ExportFalsePositiveAppendix(psms, databaseFileName, path, out string e2);
-            if (e2.Length > 0) return e2;
+            if (e2.Length > 0)
+                return e2;
             ExportFilteredFusionPeptideAppendix(psms, databaseFileName, path);
             return "";
         }
 
-        public static void ExportCandidates(List<PSM> psms, string path, out string error_message)
+        public void ExportCandidates(List<PSM> psms, string path, out string error_message)
         {
-            error_message = "";
-            using (StreamWriter file = new StreamWriter(path+folder+ @"\" + folder + "ExportedFusionCandidates.txt"))
+            string mutableError_message = "";
+            using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "ExportedFusionCandidates.txt"))
             {
                 file.WriteLine("Scan" + '\t' + "ExperimentalMass" + '\t' + "OriginalNSequence" + '\t' + "OriginalNScore" + '\t' + "OriginalCSequence" + '\t' + "OriginalCScore" + '\t' + "SampleSequence" + '\t' + "Ambiguity" + '\t' + "ProbableType" + '\t' + "MostProbableSequenceJunctions" + '\t' + "MostProbableSequence(s)" + '\t' + "MostProbableParents" + '\t' + "AllPossibleSequenceJunctions" + '\t' + "AllPossibleSequence(s)" + '\t' + "AllPossibleParent(s)" + '\t' + "NumberOfPossibleSequences" + "PotentialFalsePositives");
-                foreach (PSM psm in psms)
+
+                int progress = 0;
+                Parallel.ForEach(psms, (psm) =>
                 {
-                    //printout the scan, the mass, the sequences with and without junctions, the number of potential sequences
-                    string allPossibleSequences = "";
+                   //printout the scan, the mass, the sequences with and without junctions, the number of potential sequences
+                   string allPossibleSequences = "";
                     string mostProbableSequences = "";
                     int indexOfFirstProbableSequence = -1;
                     string mostProbableParents = "";
                     string allPossibleParents = "";
                     FusionCandidate.FusionType probableType = psm.fusionType;
-                    for(int fc=0; fc<psm.getFusionCandidates().Count(); fc++)
+                    for (int fc = 0; fc < psm.getFusionCandidates().Count(); fc++)
                     {
                         FusionCandidate fusionCandidate = psm.getFusionCandidates()[fc]; //need fc for indexOfFirstProbableSequence
-                        char[] tempArray = fusionCandidate.seq.ToCharArray();
+                       char[] tempArray = fusionCandidate.seq.ToCharArray();
                         //if most probable, add to all and most
                         if (fusionCandidate.fusionType.Equals(probableType))
                         {
                             //record sequences
-                            if(indexOfFirstProbableSequence<0)
+                            if (indexOfFirstProbableSequence < 0)
                             {
                                 indexOfFirstProbableSequence = fc;
                             }
@@ -98,7 +110,7 @@ namespace NeoInternal
                             for (int i = 0; i < tempArray.Count(); i++)
                             {
                                 allPossibleSequences += tempArray[i];
-                                if(fusionCandidate.getJunctionIndexes().Contains(i))
+                                if (fusionCandidate.getJunctionIndexes().Contains(i))
                                 {
                                     allPossibleSequences += "-";
                                 }
@@ -107,33 +119,36 @@ namespace NeoInternal
                             //record parents
                             allPossibleParents += GenerateParentOutput(fusionCandidate.translatedParents, fusionCandidate.cisParents, fusionCandidate.transParents);
                         }
-                        /*        foreach(ParentInfo PI in fusionCandidate.parentInfo)
-                                {
-                                    parents += PI.accession + "_" + PI.parentType.ToString() + "_" + PI.seqFound + "|";
-                                }*/
+                       /*        foreach(ParentInfo PI in fusionCandidate.parentInfo)
+                               {
+                                   parents += PI.accession + "_" + PI.parentType.ToString() + "_" + PI.seqFound + "|";
+                               }*/
                     }
 
                     allPossibleSequences = allPossibleSequences.Substring(0, allPossibleSequences.Length - 1); //remove last "|"
-                    mostProbableSequences = mostProbableSequences.Substring(0, mostProbableSequences.Length - 1); //remove last "|"
+                   mostProbableSequences = mostProbableSequences.Substring(0, mostProbableSequences.Length - 1); //remove last "|"
 
-                    string ambiguity = "";
+                   string ambiguity = "";
                     AlternativeSequences.findIons(psm.getFusionCandidates()[indexOfFirstProbableSequence], psm, out string e); //this should be carried over, but it's not...
-                    error_message += e;
+                   lock (mutableError_message)
+                    {
+                        mutableError_message += e;
+                    }
                     bool[] foundIons = psm.getFusionCandidates()[indexOfFirstProbableSequence].getFoundIons();
                     char[] firstSeq = psm.getFusionCandidates()[indexOfFirstProbableSequence].seq.ToCharArray();
-                 //   if(foundIons.Count()==firstSeq.Count()) //prevent crashing if something went wrong
+                   //   if(foundIons.Count()==firstSeq.Count()) //prevent crashing if something went wrong
                    // {
-                    bool ambiguous = false;
+                   bool ambiguous = false;
                     for (int i = 0; i < foundIons.Count(); i++)
                     {
                         if (foundIons[i]) //if found
-                        {
+                       {
                             ambiguity += firstSeq[i]; //add aa
-                            if (ambiguous) //if it is part of an ambiguous sequence
-                            {
+                           if (ambiguous) //if it is part of an ambiguous sequence
+                           {
                                 ambiguity += ")";
                                 ambiguous = false; //no longer ambiguous
-                            }
+                           }
                         }
                         else
                         {
@@ -146,42 +161,48 @@ namespace NeoInternal
                         }
                     }
                     string potentialFalsePositives = "";
-                    foreach(Variant v in psm.variants)
+                    foreach (Variant v in psm.variants)
                     {
                         potentialFalsePositives += v.id + "_" + v.start + "-" + (v.start + v.peptideLength - 1) + "(" + v.pepSeq + ")" + v.varType + "|";
                     }
-                    if(potentialFalsePositives.Length>0)
+                    if (potentialFalsePositives.Length > 0)
                     {
                         potentialFalsePositives = potentialFalsePositives.Substring(0, potentialFalsePositives.Length - 1); //remove last |
-                    }
-                    //workarounds for excel. Actual limit is 32767, but that doesn't seem to work
-                    if(mostProbableParents.Length > 30000)
+                   }
+                   //workarounds for excel. Actual limit is 32767, but that doesn't seem to work
+                   if (mostProbableParents.Length > 30000)
                     {
                         mostProbableParents = mostProbableParents.Substring(0, 30000);
                     }
-                    if(allPossibleParents.Length > 30000)
+                    if (allPossibleParents.Length > 30000)
                     {
                         allPossibleParents = allPossibleParents.Substring(0, 30000);
-                    } 
-                    //  }
-                      //file.WriteLine("Scan" +                     '\t' + "ExperimentalMass" +         '\t' + "OriginalBSequence" + '\t' + "OriginalBScore" +      '\t' + "OriginalYSequence" +    '\t' + "OriginalYScore" +       '\t' + "SampleSequence" +                                        '\t' + "Ambiguity" +       '\t' + "ProbableType" +     '\t' + "MostProbablySequenceJunctions"+ '\t' + "MostProbableSequence(s)" +            '\t' + "MostProbableParents" + '\t' + "AllPossibleSequenceJunctions" + '\t' + "AllPossibleSequence(s)" + '\t' + "AllPossibleParent(s)" + '\t' + "NumberOfPossibleSequences");
-                    file.WriteLine(psm.getScan().ToString() + '\t' + psm.getExpMass().ToString() + '\t' + psm.getNInfo().seq + '\t' + psm.getNInfo().score + '\t' + psm.getCInfo().seq + '\t' + psm.getCInfo().score + '\t' + psm.getFusionCandidates()[indexOfFirstProbableSequence].seq + '\t' + ambiguity + '\t' + psm.fusionType.ToString() + '\t' + mostProbableSequences + '\t' + mostProbableSequences.Replace("-", "") + '\t' + mostProbableParents + '\t' + allPossibleSequences + '\t' + allPossibleSequences.Replace("-", "") + '\t' + allPossibleParents + '\t' + psm.getFusionCandidates().Count().ToString() + '\t' + potentialFalsePositives);
-                }
-            }
-      /*      using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\" + folder + @"\"+folder+"testFlipper.txt"))
-            {
-                foreach (PSM psm in psms)
-                {
-                    //printout the scan, the mass, the sequences with and without junctions, the number of potential sequences
-                    foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
-                    {
-                        file.WriteLine(fusionCandidate.seq);
                     }
-                }
-            }*/
+                   //  }
+                   //file.WriteLine("Scan" +                     '\t' + "ExperimentalMass" +         '\t' + "OriginalBSequence" + '\t' + "OriginalBScore" +      '\t' + "OriginalYSequence" +    '\t' + "OriginalYScore" +       '\t' + "SampleSequence" +                                        '\t' + "Ambiguity" +       '\t' + "ProbableType" +     '\t' + "MostProbablySequenceJunctions"+ '\t' + "MostProbableSequence(s)" +            '\t' + "MostProbableParents" + '\t' + "AllPossibleSequenceJunctions" + '\t' + "AllPossibleSequence(s)" + '\t' + "AllPossibleParent(s)" + '\t' + "NumberOfPossibleSequences");
+                   lock (file)
+                    {
+                        file.WriteLine(psm.getScan().ToString() + '\t' + psm.getExpMass().ToString() + '\t' + psm.getNInfo().seq + '\t' + psm.getNInfo().score + '\t' + psm.getCInfo().seq + '\t' + psm.getCInfo().score + '\t' + psm.getFusionCandidates()[indexOfFirstProbableSequence].seq + '\t' + ambiguity + '\t' + psm.fusionType.ToString() + '\t' + mostProbableSequences + '\t' + mostProbableSequences.Replace("-", "") + '\t' + mostProbableParents + '\t' + allPossibleSequences + '\t' + allPossibleSequences.Replace("-", "") + '\t' + allPossibleParents + '\t' + psm.getFusionCandidates().Count().ToString() + '\t' + potentialFalsePositives);
+                        progress++;
+                        this.worker.ReportProgress(progress / psms.Count()* 100);
+                    }
+                });
+            }
+            /*      using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\" + folder + @"\"+folder+"testFlipper.txt"))
+                  {
+                      foreach (PSM psm in psms)
+                      {
+                          //printout the scan, the mass, the sequences with and without junctions, the number of potential sequences
+                          foreach (FusionCandidate fusionCandidate in psm.getFusionCandidates())
+                          {
+                              file.WriteLine(fusionCandidate.seq);
+                          }
+                      }
+                  }*/
+            error_message = mutableError_message;
         }
 
-        public static void ExportFullFASTA(List<PSM> psms, string databaseFileName, string path)
+        private static void ExportFullFASTA(List<PSM> psms, string databaseFileName, string path)
         {
             //@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\"
             using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FullFusionDatabase.fasta"))
@@ -251,7 +272,7 @@ namespace NeoInternal
             }
         }
 
-        public static void ExportFASTAAppendix(List<PSM> psms, string databaseFileName, string path)
+        private static void ExportFASTAAppendix(List<PSM> psms, string databaseFileName, string path)
         {
             //@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\"
             using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FusionDatabaseAppendix.fasta"))
@@ -284,7 +305,7 @@ namespace NeoInternal
                 }
             }
         }
-        public static void ExportFalsePositiveAppendix(List<PSM> psms, string databaseFileName, string path, out string error_message)
+        private static void ExportFalsePositiveAppendix(List<PSM> psms, string databaseFileName, string path, out string error_message)
         {
             error_message = "";
             //@"C:\Users\Zach Rolfs\Desktop\Chemistry\Smith Research\Fusion Peptides\Neo\Results\"
@@ -487,7 +508,7 @@ namespace NeoInternal
             file.WriteLine("</feature>");
         }
 
-        public static void ExportFilteredFusionPeptideAppendix(List<PSM> psms, string databaseFileName, string path)
+        private static void ExportFilteredFusionPeptideAppendix(List<PSM> psms, string databaseFileName, string path)
         {
             using (StreamWriter file = new StreamWriter(path + folder + @"\" + folder + "FilteredFusionDatabaseAppendix.fasta"))
             {
@@ -522,7 +543,7 @@ namespace NeoInternal
             }
         }
 
-        public static string GenerateParentOutput(List<TranslatedParent> translatedParents, List<CisParent> cisParents, List<TransParent> transParents)
+        private static string GenerateParentOutput(List<TranslatedParent> translatedParents, List<CisParent> cisParents, List<TransParent> transParents)
         {
             string output = "";
             foreach (TranslatedParent tlp in translatedParents)

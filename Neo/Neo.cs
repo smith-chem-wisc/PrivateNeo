@@ -46,12 +46,14 @@ namespace Neo
          //   try
             {
                 MMOutput = import.ImportPSMs(nFileName, cFileName, out string error_message);
-                MessageBox.Show(error_message);
+                if(error_message.Length>0)
+                    MessageBox.Show(error_message);
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading database... (Task 1/6)"; }));
                 ClearProgress();
                 database = import.ImportDatabase(databaseFileName, out string error_message2);
-                MessageBox.Show(error_message2);
+                if (error_message2.Length > 0)
+                    MessageBox.Show(error_message2);
 
                 {
                     //Cool bit of code to identify number of random sequences of a specific length existing within a database. 5mer takes ~3 hours.
@@ -135,8 +137,8 @@ namespace Neo
                 ClearProgress();
                 SpliceFragments sf = new SpliceFragments(backgroundWorker1);
                 List<PSM> candidates = sf.ExperimentalTheoreticalMatching(MMOutput, out string error_message);
-                MessageBox.Show(error_message);
-                { }
+                if (error_message.Length > 0)
+                    MessageBox.Show(error_message);
       //          MessageBox.Show(candidates.Count().ToString() + " putative fusion peptide PSMs were selected");
 
                // this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Reading Fragment Index... (Task 3/6)"; }));
@@ -146,19 +148,22 @@ namespace Neo
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Finding ambiquity... (Task 3/6)"; }));
                 ClearProgress();
                 altSeq.FindAmbiguity(candidates, database, out string error_message2);
-                MessageBox.Show(error_message2);
+                if (error_message2.Length > 0)
+                    MessageBox.Show(error_message2);
                 FalsePositives.generateDecoys = false;
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Recording variants... (Task 4/6)"; }));
                 ClearProgress();
                 FalsePositives rfp = new FalsePositives(backgroundWorker1);
                 rfp.FindCommonFalsePositives(candidates, database, out string error_message3);
-                MessageBox.Show(error_message3);
+                if (error_message3.Length > 0)
+                    MessageBox.Show(error_message3);
 
                 //        MessageBox.Show("After filtering, "+candidates.Count().ToString() + " putative fusion peptides were generated");
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Exporting results... (Task 5/6)"; }));
                 ClearProgress();
-                string e3 = ExportData.ExportAll(candidates, databaseFileName);
+                ExportData ed = new ExportData(backgroundWorker1);
+                string e3 = ed.ExportAll(candidates, databaseFileName);
                 if (e3.Length > 0) MessageBox.Show(e3);
 
                 this.Invoke(new MethodInvoker(delegate { StatustxtBox.Text = "Complete! (6/6)"; }));
